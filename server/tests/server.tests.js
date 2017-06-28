@@ -10,7 +10,9 @@ const todos = [{
   text: 'Test todo 1'
 }, {
   _id: new ObjectID(),
-  text: 'Test todo 2'
+  text: 'Test todo 2',
+  completed: true,
+  completedAt: 333
 }];
 
 beforeEach((done) => {
@@ -116,6 +118,65 @@ describe('DELETE /todos/:id', () => {
 
       Todo.find({text: todos[0].text}).then((todos) => {
         expect(todos.length).toBe(0);
+        done();
+      }).catch((e) => done(e));
+    });
+  });
+
+  it('should return 404 for id not found', (done) => {
+    var id = new ObjectID();
+    request(app)
+    .delete(`/todos/${id}`)
+    .expect(404)
+    .end(done);
+  });
+
+  it('should return 404 for invalid id', (done) => {
+    request(app)
+    .delete('/todos/1345')
+    .expect(404)
+    .end(done);
+  });
+
+});
+
+describe('PATCH /todos/:id', () => {
+
+  it('should Upadte the todo to completed true', (done) => {
+    request(app)
+    .patch(`/todos/${todos[0]._id}`)
+    .send({ completed: true })
+    .expect((res) => {
+      expect(res.body.todo.text).toBe(todos[0].text);
+    })
+    .end((err, res) => {
+      if(err) {
+        return done(err);
+      }
+
+      Todo.find({text: todos[0].text}).then((todo) => {
+        expect(todo[0].completed).toBe(true);
+        expect(todo[0].completedAt).toNotBe(null);
+        done();
+      }).catch((e) => done(e));
+    });
+  });
+
+  it('should Upadte the todo to completed true', (done) => {
+    request(app)
+    .patch(`/todos/${todos[1]._id}`)
+    .send({ completed: false })
+    .expect((res) => {
+      expect(res.body.todo.text).toBe(todos[1].text);
+    })
+    .end((err, res) => {
+      if(err) {
+        return done(err);
+      }
+
+      Todo.find({text: todos[1].text}).then((todo) => {
+        expect(todo[0].completed).toBe(false);
+        expect(todo[0].completedAt).toBe(null);
         done();
       }).catch((e) => done(e));
     });
